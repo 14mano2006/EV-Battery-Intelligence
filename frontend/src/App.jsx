@@ -19,6 +19,62 @@ const DISPLAY_FIELDS = [
   ["cycle_progress", "Cycle Progress", "0.01"],
 ];
 
+// ============================================================
+// NAV ICONS — small inline SVGs, sized via .nav-item svg in App.css
+// ============================================================
+
+const NAV_ICONS = {
+  dashboard: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="7" height="9" rx="1.5" />
+      <rect x="14" y="3" width="7" height="5" rx="1.5" />
+      <rect x="14" y="12" width="7" height="9" rx="1.5" />
+      <rect x="3" y="16" width="7" height="5" rx="1.5" />
+    </svg>
+  ),
+  prediction: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="2" y="7" width="18" height="10" rx="2" />
+      <path d="M22 10v4" strokeLinecap="round" />
+      <path d="M6 12h3l1.5-3L12 15l1.5-3H16" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  fleet: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M3 16V8a1 1 0 011-1h9l4 4v5a1 1 0 01-1 1H4a1 1 0 01-1-1z" />
+      <circle cx="7.5" cy="17.5" r="1.7" />
+      <circle cx="16.5" cy="17.5" r="1.7" />
+    </svg>
+  ),
+  addVehicle: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" strokeLinecap="round" />
+    </svg>
+  ),
+  maintenance: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2.1-2.1 2.7-2.5z" strokeLinejoin="round" />
+    </svg>
+  ),
+  realtime: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M2 12h4l2 7 4-14 2 7h8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  analytics: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 20V10M12 20V4M20 20v-7" strokeLinecap="round" />
+    </svg>
+  ),
+  map: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z" />
+      <circle cx="12" cy="10" r="2.4" />
+    </svg>
+  ),
+};
+
 function getVehicleFromPath() {
   const match = window.location.pathname.match(
     /^\/vehicles\/([^/]+)(?:\/|$)/i
@@ -65,6 +121,43 @@ function navigateToPage(page) {
   setTimeout(() => {
     window.history.replaceState({}, "", page === "map" ? "/charging-map" : "/");
   }, 0);
+}
+
+// ============================================================
+// BATTERY PACK HEALTH — estimated per-module visualization
+// Built from aggregate SOH (no per-cell telemetry exists yet),
+// so cell counts are a proportional estimate, not measured data.
+// ============================================================
+
+function buildPackCells(soh, totalCells = 24) {
+  const safeSoh = Number.isFinite(soh) ? Math.max(0, Math.min(100, soh)) : 100;
+
+  const healthyCount = Math.round((safeSoh / 100) * totalCells);
+  const remaining = totalCells - healthyCount;
+  const criticalCount = Math.round(remaining * 0.35);
+  const warnCount = remaining - criticalCount;
+
+  const cells = [
+    ...Array(healthyCount).fill("healthy"),
+    ...Array(warnCount).fill("warn"),
+    ...Array(criticalCount).fill("critical"),
+  ];
+
+  // Spread the flagged cells out instead of clustering them at the end.
+  const spread = new Array(totalCells).fill("healthy");
+  let cursor = 0;
+  cells
+    .filter((c) => c !== "healthy")
+    .forEach((status, i) => {
+      const position = (i * 7 + 3) % totalCells;
+      spread[position] = status;
+    });
+  for (let i = 0; i < totalCells; i++) {
+    if (spread[i] !== "healthy") continue;
+    if (cursor < healthyCount) cursor++;
+  }
+
+  return spread;
 }
 
 function App() {
@@ -768,7 +861,7 @@ function App() {
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span className="status-dot" style={{ background: telemetryEnabled ? "#16a34a" : "#94a3b8" }}></span>
+            <span className="status-dot" style={{ background: telemetryEnabled ? "#2fe0ad" : "#5b6673" }}></span>
             <strong>{telemetryEnabled ? "Streaming" : "Paused"}</strong>
           </div>
         </div>
@@ -796,7 +889,7 @@ function App() {
             <>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14, marginTop: 18 }}>
                 {metricCards.map(([label, value, caption]) => (
-                  <div key={label} className="stat-card" style={{ boxShadow: "none", border: "1px solid #e5e7eb" }}>
+                  <div key={label} className="stat-card" style={{ boxShadow: "none" }}>
                     <span>{label}</span>
                     <strong>{loadingTelemetry && !telemetry ? "--" : value}</strong>
                     <small>{caption}</small>
@@ -805,24 +898,24 @@ function App() {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 18, marginTop: 18 }}>
-                <div style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 18 }}>
-                  <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>AI health inference</div>
+                <div style={{ border: "1px solid var(--border)", borderRadius: 14, padding: 18, background: "#0a0f15" }}>
+                  <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>AI health inference</div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
                     <strong style={{ fontSize: 34 }}>{t.predicted_soh_percent != null ? `${Number(t.predicted_soh_percent).toFixed(2)}%` : "--"}</strong>
-                    <span style={{ color: "#64748b" }}>predicted SOH</span>
+                    <span style={{ color: "var(--muted)" }}>predicted SOH</span>
                   </div>
-                  <div style={{ marginTop: 8, color: "#64748b", fontSize: 12 }}>
+                  <div style={{ marginTop: 8, color: "var(--muted)", fontSize: 12 }}>
                     Recorded SOH: {t.current_soh_percent != null ? `${Number(t.current_soh_percent).toFixed(2)}%` : "--"}
                   </div>
                 </div>
 
-                <div style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 18 }}>
-                  <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>Operational status</div>
+                <div style={{ border: "1px solid var(--border)", borderRadius: 14, padding: 18, background: "#0a0f15" }}>
+                  <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>Operational status</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span className={`risk-badge ${riskClass}`}>{t.risk_level || "LOW"}</span>
                     <strong>{t.status || "Waiting for telemetry"}</strong>
                   </div>
-                  <p style={{ margin: "12px 0 0", color: "#64748b", fontSize: 13 }}>
+                  <p style={{ margin: "12px 0 0", color: "var(--muted)", fontSize: 13 }}>
                     {t.recommendation || "Waiting for the first telemetry packet."}
                   </p>
                 </div>
@@ -834,7 +927,7 @@ function App() {
                 </div>
               )}
 
-              <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", color: "#64748b", fontSize: 12 }}>
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", color: "var(--muted)", fontSize: 12 }}>
                 <span>Source: {t.source === "simulated_telemetry" ? "Simulated telemetry" : (t.source || "Telemetry")}</span>
                 <span>Last update: {t.timestamp ? new Date(t.timestamp).toLocaleTimeString() : "--"}</span>
               </div>
@@ -1851,14 +1944,7 @@ function App() {
               </div>
 
               {uploadFile && (
-                <div
-                  style={{
-                    padding: "14px 16px",
-                    borderRadius: "10px",
-                    background: "#f1f5f9",
-                    color: "#334155",
-                  }}
-                >
+                <div className="selected-file">
                   Selected file:{" "}
                   <strong>{uploadFile.name}</strong>
                 </div>
@@ -1871,15 +1957,7 @@ function App() {
               )}
 
               {uploadMessage && (
-                <div
-                  style={{
-                    padding: "14px 16px",
-                    borderRadius: "10px",
-                    background: "#ecfdf5",
-                    color: "#047857",
-                    border: "1px solid #a7f3d0",
-                  }}
-                >
+                <div className="upload-success">
                   ✅ {uploadMessage}
                 </div>
               )}
@@ -1899,20 +1977,17 @@ function App() {
           </form>
 
           <div
+            className="card"
             style={{
               maxWidth: "720px",
               margin: "0 auto 30px",
-              padding: "20px",
-              borderRadius: "12px",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
             }}
           >
-            <h3 style={{ marginTop: 0 }}>
+            <h3 style={{ marginTop: 0, color: "var(--text)" }}>
               What happens automatically?
             </h3>
 
-            <ul style={{ lineHeight: 1.8 }}>
+            <ul style={{ lineHeight: 1.8, color: "var(--text-2)" }}>
               <li>Raw MAT data is processed by the backend.</li>
               <li>Battery cycle features are extracted.</li>
               <li>Records are stored in the vehicle database.</li>
@@ -2084,7 +2159,7 @@ function App() {
                       paddingRight
                     }
                     y2={y}
-                    stroke="#e5e7eb"
+                    stroke="#1e2732"
                   />
 
                   <text
@@ -2094,7 +2169,7 @@ function App() {
                     y={y + 4}
                     textAnchor="end"
                     fontSize="12"
-                    fill="#64748b"
+                    fill="#657286"
                   >
                     {value.toFixed(0)}%
                   </text>
@@ -2118,13 +2193,13 @@ function App() {
               height -
               paddingBottom
             }
-            stroke="#94a3b8"
+            stroke="#3a4553"
           />
 
           <polyline
             points={points}
             fill="none"
-            stroke="#2563eb"
+            stroke="#2fe0ad"
             strokeWidth="3"
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -2134,7 +2209,7 @@ function App() {
             x={paddingLeft}
             y={height - 15}
             fontSize="12"
-            fill="#64748b"
+            fill="#657286"
           >
             Cycle {minCycle}
           </text>
@@ -2147,7 +2222,7 @@ function App() {
             y={height - 15}
             textAnchor="end"
             fontSize="12"
-            fill="#64748b"
+            fill="#657286"
           >
             Cycle {maxCycle}
           </text>
@@ -2157,7 +2232,7 @@ function App() {
             y={height - 2}
             textAnchor="middle"
             fontSize="13"
-            fill="#475569"
+            fill="#8a94a3"
           >
             Battery Cycle
           </text>
@@ -2167,7 +2242,7 @@ function App() {
             y={height / 2}
             textAnchor="middle"
             fontSize="13"
-            fill="#475569"
+            fill="#8a94a3"
             transform={`rotate(-90 15 ${
               height / 2
             })`}
@@ -2222,10 +2297,10 @@ function App() {
 
     const riskColor = (risk) => {
       const value = String(risk || '').toLowerCase();
-      if (value === 'critical') return '#dc2626';
-      if (value === 'high') return '#ea580c';
-      if (value === 'medium') return '#f59e0b';
-      return '#16a34a';
+      if (value === 'critical') return '#ef5350';
+      if (value === 'high') return '#f07842';
+      if (value === 'medium') return '#f3b63f';
+      return '#2fe0ad';
     };
 
     const refreshAnalytics = async () => {
@@ -2296,8 +2371,8 @@ function App() {
                           <button className="vehicle-link" onClick={() => openVehicleFromFleet(v.battery_id)}>{v.battery_id}</button>
                           <span>{soh.toFixed(2)}%</span>
                         </div>
-                        <div style={{ height: '12px', borderRadius: '999px', background: '#e5e7eb', overflow: 'hidden' }}>
-                          <div style={{ width: `${Math.max(0, Math.min(100, soh))}%`, height: '100%', borderRadius: '999px', background: '#2563eb' }} />
+                        <div style={{ height: '12px', borderRadius: '999px', background: 'var(--track)', overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.max(0, Math.min(100, soh))}%`, height: '100%', borderRadius: '999px', background: '#2fe0ad' }} />
                         </div>
                       </div>
                     );
@@ -2313,8 +2388,8 @@ function App() {
                   {[['Low', riskCounts.low, 'analytics-low'], ['Medium', riskCounts.medium, 'analytics-medium'], ['High', riskCounts.high, 'analytics-high'], ['Critical', riskCounts.critical, 'analytics-critical']].map(([label, count, cls]) => (
                     <div key={label} style={{ display: 'grid', gridTemplateColumns: '75px 1fr 35px', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                       <span style={{ fontWeight: 600 }}>{label}</span>
-                      <div style={{ height: '14px', borderRadius: '999px', background: '#e5e7eb', overflow: 'hidden' }}>
-                        <div style={{ width: `${validVehicles.length ? (count / validVehicles.length) * 100 : 0}%`, height: '100%', borderRadius: '999px', background: cls === 'analytics-critical' ? '#dc2626' : cls === 'analytics-high' ? '#ea580c' : cls === 'analytics-medium' ? '#f59e0b' : '#16a34a' }} />
+                      <div style={{ height: '14px', borderRadius: '999px', background: 'var(--track)', overflow: 'hidden' }}>
+                        <div style={{ width: `${validVehicles.length ? (count / validVehicles.length) * 100 : 0}%`, height: '100%', borderRadius: '999px', background: cls === 'analytics-critical' ? '#ef5350' : cls === 'analytics-high' ? '#f07842' : cls === 'analytics-medium' ? '#f3b63f' : '#2fe0ad' }} />
                       </div>
                       <strong style={{ textAlign: 'right' }}>{count}</strong>
                     </div>
@@ -2332,7 +2407,7 @@ function App() {
                     return (
                       <div key={v.battery_id} style={{ marginBottom: '18px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px', fontWeight: 600 }}><span>{v.battery_id}</span><span>{value.toFixed(2)}%</span></div>
-                        <div style={{ height: '12px', borderRadius: '999px', background: '#e5e7eb', overflow: 'hidden' }}><div style={{ width: `${(value / maxDegradation) * 100}%`, height: '100%', borderRadius: '999px', background: '#f59e0b' }} /></div>
+                        <div style={{ height: '12px', borderRadius: '999px', background: 'var(--track)', overflow: 'hidden' }}><div style={{ width: `${(value / maxDegradation) * 100}%`, height: '100%', borderRadius: '999px', background: '#f3b63f' }} /></div>
                       </div>
                     );
                   })}
@@ -2351,7 +2426,7 @@ function App() {
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><strong>#{index + 1}</strong><button className="vehicle-link" onClick={() => openVehicleFromFleet(v.battery_id)}>{v.battery_id}</button></div>
                           <span style={{ fontWeight: 700, color: riskColor(v.risk_level) }}>{v.risk_level || 'LOW'} · {priority}</span>
                         </div>
-                        <div style={{ height: '12px', borderRadius: '999px', background: '#e5e7eb', overflow: 'hidden' }}><div style={{ width: `${(priority / maxPriority) * 100}%`, height: '100%', borderRadius: '999px', background: riskColor(v.risk_level) }} /></div>
+                        <div style={{ height: '12px', borderRadius: '999px', background: 'var(--track)', overflow: 'hidden' }}><div style={{ width: `${(priority / maxPriority) * 100}%`, height: '100%', borderRadius: '999px', background: riskColor(v.risk_level) }} /></div>
                       </div>
                     );
                   })}
@@ -2394,6 +2469,9 @@ function App() {
   // MAIN UI
   // ============================================================
 
+  const currentSOH = trend?.current_soh_percent != null ? Number(trend.current_soh_percent) : null;
+  const packCells = buildPackCells(currentSOH ?? 100);
+
   return (
     <div className="app">
 
@@ -2425,6 +2503,7 @@ function App() {
               setActivePage("dashboard")
             }
           >
+            {NAV_ICONS.dashboard}
             Dashboard
           </button>
 
@@ -2438,6 +2517,7 @@ function App() {
               setActivePage("prediction")
             }
           >
+            {NAV_ICONS.prediction}
             Battery Prediction
           </button>
 
@@ -2451,6 +2531,7 @@ function App() {
               setActivePage("fleet")
             }
           >
+            {NAV_ICONS.fleet}
             Fleet Monitoring
           </button>
 
@@ -2464,6 +2545,7 @@ function App() {
               setActivePage("addVehicle")
             }
           >
+            {NAV_ICONS.addVehicle}
             Add Vehicle
           </button>
 
@@ -2477,6 +2559,7 @@ function App() {
               setActivePage("maintenance")
             }
           >
+            {NAV_ICONS.maintenance}
             Maintenance
           </button>
 
@@ -2486,6 +2569,7 @@ function App() {
             }`}
             onClick={() => setActivePage("realtime")}
           >
+            {NAV_ICONS.realtime}
             Live Telemetry
           </button>
 
@@ -2497,6 +2581,7 @@ function App() {
               setActivePage("analytics")
             }
           >
+            {NAV_ICONS.analytics}
             Analytics
           </button>
 
@@ -2509,6 +2594,7 @@ function App() {
               navigateToPage("map");
             }}
           >
+            {NAV_ICONS.map}
             Charging Map
           </button>
 
@@ -2653,19 +2739,29 @@ function App() {
                   Current SOH
                 </span>
 
-                <strong>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 8 }}>
 
-                  {trend?.current_soh_percent != null
-                    ? `${Number(
-                        trend.current_soh_percent
-                      ).toFixed(2)}%`
-                    : "--"}
+                  <div
+                    className="mini-ring"
+                    style={{
+                      background: `conic-gradient(#2fe0ad ${
+                        (currentSOH ?? 0) * 3.6
+                      }deg, #1c2530 0deg)`,
+                    }}
+                  >
+                    <div className="mini-ring-inner"></div>
+                  </div>
 
-                </strong>
+                  <div>
+                    <strong style={{ margin: 0 }}>
+                      {currentSOH != null ? `${currentSOH.toFixed(2)}%` : "--"}
+                    </strong>
+                    <small>
+                      State of Health
+                    </small>
+                  </div>
 
-                <small>
-                  State of Health
-                </small>
+                </div>
 
               </div>
 
@@ -2960,20 +3056,20 @@ function App() {
                         background: `
                           radial-gradient(
                             circle at center,
-                            white 57%,
+                            #0a0f15 57%,
                             transparent 58%
                           ),
                           conic-gradient(
-                            #2563eb 0deg,
-                            #3b82f6 ${
+                            #2fe0ad 0deg,
+                            #58f0c4 ${
                               animatedPrediction *
                               3.6
                             }deg,
-                            #e5e7eb ${
+                            #1c2530 ${
                               animatedPrediction *
                               3.6
                             }deg,
-                            #e5e7eb 360deg
+                            #1c2530 360deg
                           )
                         `,
                       }}
@@ -3087,6 +3183,44 @@ function App() {
 
                 )}
 
+              </div>
+
+            </section>
+
+            {/* BATTERY PACK HEALTH — hero visualization */}
+
+            <section className="card" style={{ maxWidth: 1320, margin: "0 auto 16px" }}>
+
+              <h2>Battery Pack Health</h2>
+              <p className="card-description">
+                Estimated per-module condition for{" "}
+                <strong>{selectedVehicle || "--"}</strong>, derived from
+                aggregate State of Health — not individual cell telemetry.
+              </p>
+
+              <div className="pack-grid">
+                {packCells.map((status, index) => (
+                  <div
+                    key={index}
+                    className={`cell ${status}`}
+                    title={`Module ${index + 1}: ${status}`}
+                  />
+                ))}
+              </div>
+
+              <div className="pack-legend">
+                <div className="pack-legend-item">
+                  <span className="pack-legend-dot" style={{ background: "#2fe0ad" }}></span>
+                  Healthy
+                </div>
+                <div className="pack-legend-item">
+                  <span className="pack-legend-dot" style={{ background: "#f3b63f" }}></span>
+                  Monitor
+                </div>
+                <div className="pack-legend-item">
+                  <span className="pack-legend-dot" style={{ background: "#ef5350" }}></span>
+                  Critical
+                </div>
               </div>
 
             </section>
