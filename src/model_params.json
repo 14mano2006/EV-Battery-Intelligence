@@ -1,0 +1,133 @@
+{
+  "featureNames": [
+    "cycle",
+    "voltage_mean",
+    "voltage_min",
+    "voltage_max",
+    "voltage_std",
+    "voltage_range",
+    "current_mean",
+    "current_min",
+    "current_max",
+    "current_std",
+    "temperature_mean",
+    "temperature_min",
+    "temperature_max",
+    "temperature_std",
+    "discharge_duration",
+    "capacity_Ah",
+    "initial_capacity_Ah",
+    "capacity_change",
+    "capacity_degradation_rate",
+    "cycle_progress"
+  ],
+  "featureStats": {
+    "cycle": {
+      "mean": 294,
+      "std": 184.39605408442114
+    },
+    "voltage_mean": {
+      "mean": 3.4993529584264778,
+      "std": 0.05079193023033349
+    },
+    "voltage_min": {
+      "mean": 2.3814928976640024,
+      "std": 0.24488864532021884
+    },
+    "voltage_max": {
+      "mean": 4.192886513603773,
+      "std": 0.009298924981714505
+    },
+    "voltage_std": {
+      "mean": 0.24667406770142222,
+      "std": 0.01804499615084024
+    },
+    "voltage_range": {
+      "mean": 1.8113936159397679,
+      "std": 0.24727591715843242
+    },
+    "current_mean": {
+      "mean": -1.8339489243957994,
+      "std": 0.11241392866188617
+    },
+    "current_min": {
+      "mean": -2.0093433828007705,
+      "std": 0.010697299509338518
+    },
+    "current_max": {
+      "mean": 0.0015110205711389613,
+      "std": 0.0016398742118686092
+    },
+    "current_std": {
+      "mean": 0.5129678956519065,
+      "std": 0.188309927163131
+    },
+    "temperature_mean": {
+      "mean": 32.6505780431197,
+      "std": 0.801861117738847
+    },
+    "temperature_min": {
+      "mean": 24.11833340470329,
+      "std": 0.47210365855995134
+    },
+    "temperature_max": {
+      "mean": 40.05161188619847,
+      "std": 1.1842801512585366
+    },
+    "temperature_std": {
+      "mean": 3.929887355164848,
+      "std": 0.3869598100173414
+    },
+    "discharge_duration": {
+      "mean": 3129.523886904761,
+      "std": 245.91931258935676
+    },
+    "capacity_Ah": {
+      "mean": 1.5879247075534895,
+      "std": 0.20820972429627868
+    },
+    "initial_capacity_Ah": {
+      "mean": 1.9276257690715017,
+      "std": 0.07745992545320914
+    },
+    "capacity_change": {
+      "mean": -0.0036501338764208797,
+      "std": 0.01675034155930651
+    },
+    "capacity_degradation_rate": {
+      "mean": -0.0007824787956062876,
+      "std": 0.00592652287829055
+    },
+    "cycle_progress": {
+      "mean": 83.5,
+      "std": 48.496563452132015
+    }
+  },
+  "modelWeights": {
+    "intercept": 82.55359978834156,
+    "coefficients": {
+      "cycle": -3.3813888868925597,
+      "voltage_mean": -0.7126862410748325,
+      "voltage_min": 0.22056485283060231,
+      "voltage_max": -0.20461214622535073,
+      "voltage_std": 0.7288870744468041,
+      "voltage_range": -0.2261299774771163,
+      "current_mean": -0.5000295256143465,
+      "current_min": 0.1264125857634839,
+      "current_max": 0.008269486996197981,
+      "current_std": -0.42517695496122854,
+      "temperature_mean": 2.7924330074907884,
+      "temperature_min": -1.3649693062544672,
+      "temperature_max": -0.5674700412414618,
+      "temperature_std": -2.05705732061597,
+      "discharge_duration": -0.187085275335012,
+      "capacity_Ah": 10.100735364561432,
+      "initial_capacity_Ah": -3.5469742698334574,
+      "capacity_change": 0.24069307947330698,
+      "capacity_degradation_rate": -0.2290950984124201,
+      "cycle_progress": 2.7769338955934155
+    }
+  },
+  "modelName": "GradientBoostingRegressor (ML Ensemble)",
+  "scalerName": "StandardScaler"
+}

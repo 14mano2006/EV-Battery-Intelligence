@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EV Battery Intelligence</title>
+    <meta name="description" content="AI-based EV battery health prediction, fleet monitoring, and predictive maintenance dashboard" />
+    <meta property="og:title" content="EV Battery Intelligence" />
+    <meta property="og:description" content="AI-based EV battery health prediction, fleet monitoring, and predictive maintenance dashboard" />
+    <script>
+      // Gracefully prevent unhandled cross-origin map script errors from breaking the app
+      window.__gmAuthFailed = false;
+      window.gm_authFailure = function() {
+        window.__gmAuthFailed = true;
+        window.dispatchEvent(new CustomEvent('gm_auth_failure'));
+      };
+
+      (function() {
+        var origError = console.error;
+        console.error = function() {
+          var str = '';
+          for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            str += ' ' + (typeof arg === 'string' ? arg : ((arg && arg.message) || ''));
+          }
+          if (
+            str.indexOf('RefererNotAllowedMapError') !== -1 ||
+            str.indexOf('Google Maps JavaScript API error') !== -1 ||
+            str.indexOf('maps.googleapis.com') !== -1
+          ) {
+            window.__gmAuthFailed = true;
+            window.dispatchEvent(new CustomEvent('gm_auth_failure'));
+            console.warn('[Handled gracefully] Google Maps domain/referer restriction:', str.trim());
+            return;
+          }
+          origError.apply(console, arguments);
+        };
+      })();
+
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = (event && event.reason) ? String(event.reason.message || event.reason) : '';
+        if (
+          reason.indexOf('RefererNotAllowedMapError') !== -1 ||
+          reason.indexOf('Google Maps JavaScript API') !== -1
+        ) {
+          window.__gmAuthFailed = true;
+          window.dispatchEvent(new CustomEvent('gm_auth_failure'));
+          if (event.preventDefault) event.preventDefault();
+        }
+      });
+
+      window.addEventListener('error', function(event) {
+        var msg = (event && event.message) ? String(event.message) : '';
+        var src = (event && (event.filename || (event.target && event.target.src))) ? String(event.filename || event.target.src) : '';
+        if (
+          msg.indexOf('RefererNotAllowedMapError') !== -1 ||
+          msg.indexOf('Google Maps JavaScript API') !== -1 ||
+          msg.indexOf('getRootNode') !== -1 ||
+          msg.indexOf('keys') !== -1 ||
+          src.indexOf('maps.googleapis.com') !== -1 ||
+          (msg === 'Script error.' && (window.__gmAuthFailed || src.indexOf('maps.googleapis.com') !== -1))
+        ) {
+          window.__gmAuthFailed = true;
+          window.dispatchEvent(new CustomEvent('gm_auth_failure'));
+          if (event.preventDefault) event.preventDefault();
+          if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

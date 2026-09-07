@@ -1,0 +1,10 @@
+{
+  "name": "EV Battery Intelligence",
+  "description": "AI-based EV battery health prediction, fleet monitoring, and predictive maintenance dashboard",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
