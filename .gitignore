@@ -1,4 +1,7 @@
-.env 
-frontend/.env 
-*.db 
-*.db 
+node_modules/
+dist/
+.aistudio/
+.env
+.env.local
+*.log
+*.db
